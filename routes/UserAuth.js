@@ -5,7 +5,7 @@ const { register, login, verifyCode } = require('../controllers/UserAuth');
 
 router.post('/register', register);
 router.post('/login', login);
-router.post('/verify-code', verifyCode); e
+router.post('/verify-code', verifyCode); 
 
 // Google Auth
 router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
