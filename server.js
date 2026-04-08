@@ -1,7 +1,6 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
-// const passport = require('passport'); 
 require('dotenv').config();
 
 // Import Routes
@@ -12,30 +11,39 @@ const authRoutes = require('./routes/UserAuth');
 
 const app = express();
 
-//  Middleware
+// Middleware
 app.use(express.json());
 
-// Update CORS to allow your frontend URL
+// Enhanced CORS to handle both www and non-www
+const allowedOrigins = [
+  "https://www.inanst.com",
+  "https://inanst.com",
+  "http://localhost:3000"
+];
+
 app.use(cors({
-  origin: process.env.CLIENT_URL || "https://www.inanst.com",
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true
 }));
 
-// app.use(passport.initialize()); 
-// require('./config/passport')(passport); 
-
-// 3. Routes for the Api
+// Routes for the Api
 app.use('/api/auth', authRoutes);
 app.use('/api/profile', profileRoutes);
 app.use('/api/newsletter', newsletterRoutes);
 app.use('/api/contact', contactRoutes);
 
-// 4. Database Connection
+// Database Connection
 mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log('Hi, Wasem! you are connected to MongoDB Atlas'))
   .catch((err) => console.error('Hi, Wasem! MongoDB Connection Error:', err));
 
-// 5. Start Server
+// Start Server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Hi, Wasem! Server running on port ${PORT}`);
