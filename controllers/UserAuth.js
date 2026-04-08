@@ -27,8 +27,8 @@ exports.register = async (req, res) => {
     const otpExpires = Date.now() + 10 * 60 * 1000; 
 
     if (user && !user.isVerified) {
-      // Handle unverified user: Update their existing record with new details and a fresh OTP
-      user.name = fullName;
+      // Update existing record (standardizing 'name' to match NextAuth)
+      user.name = fullName; 
       user.password = hashedPassword;
       user.phone = phone;
       user.country = country;
@@ -36,7 +36,7 @@ exports.register = async (req, res) => {
       user.verificationExpires = otpExpires;
       await user.save();
     } else {
-      // Create new user record
+      // Create new user record (matching NextAuth schema)
       user = new User({
         name: fullName, 
         email,
@@ -44,7 +44,9 @@ exports.register = async (req, res) => {
         country,
         password: hashedPassword,
         verificationToken: otpCode,
-        verificationExpires: otpExpires
+        verificationExpires: otpExpires,
+        role: "regular", // Default role matching your NextAuth handler
+        isVerified: false
       });
       await user.save();
     }
@@ -59,11 +61,10 @@ exports.register = async (req, res) => {
     `;
 
     try {
-      // Send the email
       await sendEmail(user.email, "Inanst Verification Code", message);
       return res.status(201).json({ msg: "OTP sent to email", email: user.email });
     } catch (emailErr) {
-      console.error("User handled, but email failed:", emailErr.message);
+      // Still return 201 so the UI can show the OTP input field
       return res.status(201).json({ 
         msg: "Account ready! Email delivery failed. Please click Resend OTP.",
         emailError: true,
@@ -73,7 +74,7 @@ exports.register = async (req, res) => {
 
   } catch (err) {
     console.error("Registration Error:", err);
-    res.status(500).json({ error: "Server Error during registration" });
+    return res.status(500).json({ error: "Server Error during registration" });
   }
 };
 
@@ -100,12 +101,12 @@ exports.resendOtp = async (req, res) => {
 
     try {
       await sendEmail(user.email, "New Inanst Verification Code", message);
-      res.json({ msg: "New code sent to email" });
+      return res.json({ msg: "New code sent to email" });
     } catch (emailErr) {
-      res.status(500).json({ msg: "Failed to send email. Please try again later." });
+      return res.status(500).json({ msg: "Failed to send email. Please try again later." });
     }
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    return res.status(500).json({ error: err.message });
   }
 };
 
@@ -131,13 +132,13 @@ exports.verifyCode = async (req, res) => {
       { expiresIn: '1d' }
     );
 
-    res.json({
+    return res.json({
       msg: "Email verified successfully",
       token,
       user: { id: user._id, name: user.name, role: user.role }
     });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    return res.status(500).json({ error: err.message });
   }
 };
 
@@ -158,11 +159,11 @@ exports.login = async (req, res) => {
       { expiresIn: '1d' }
     );
     
-    res.json({ 
+    return res.json({ 
       token, 
       user: { id: user._id, name: user.name, role: user.role } 
     });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    return res.status(500).json({ error: err.message });
   }
 };
