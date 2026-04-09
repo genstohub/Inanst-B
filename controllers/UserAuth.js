@@ -27,7 +27,7 @@ exports.register = async (req, res) => {
     const otpExpires = Date.now() + 10 * 60 * 1000; 
 
     if (user && !user.isVerified) {
-      // Update existing record (standardizing 'name' to match NextAuth)
+      // Update existing record (standardizing 'name' to match NextAuth schema)
       user.name = fullName; 
       user.password = hashedPassword;
       user.phone = phone;
@@ -36,7 +36,7 @@ exports.register = async (req, res) => {
       user.verificationExpires = otpExpires;
       await user.save();
     } else {
-      // Create new user record (matching NextAuth schema)
+      // Create new user record (aligned with NextAuth Google creation)
       user = new User({
         name: fullName, 
         email,
@@ -45,7 +45,7 @@ exports.register = async (req, res) => {
         password: hashedPassword,
         verificationToken: otpCode,
         verificationExpires: otpExpires,
-        role: "regular", // Default role matching your NextAuth handler
+        role: "regular", // Matching the role in your NextAuth route.ts
         isVerified: false
       });
       await user.save();
@@ -61,10 +61,12 @@ exports.register = async (req, res) => {
     `;
 
     try {
+      // Trigger the forced IPv4 sendEmail utility
       await sendEmail(user.email, "Inanst Verification Code", message);
       return res.status(201).json({ msg: "OTP sent to email", email: user.email });
     } catch (emailErr) {
-      // Still return 201 so the UI can show the OTP input field
+      // Log the error but return 201 so the frontend moves to the OTP entry screen
+      console.error("User created, but email failed:", emailErr.message);
       return res.status(201).json({ 
         msg: "Account ready! Email delivery failed. Please click Resend OTP.",
         emailError: true,
