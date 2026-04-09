@@ -8,14 +8,16 @@ const transporter = nodemailer.createTransport({
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS,
   },
+  
   family: 4, 
   tls: {
     rejectUnauthorized: false,
     family: 4 
   },
-  connectionTimeout: 15000, 
-  greetingTimeout: 15000,
-  socketTimeout: 15000,
+  
+  connectionTimeout: 20000, 
+  greetingTimeout: 20000,
+  socketTimeout: 20000,
 });
 
 const sendEmail = async (email, subject, text) => {
@@ -28,6 +30,7 @@ const sendEmail = async (email, subject, text) => {
     });
     console.log("Email sent successfully to:", email);
   } catch (error) {
+    
     console.error("Email delivery failed:", error.message);
     throw error;
   }
